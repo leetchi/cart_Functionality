@@ -17,7 +17,17 @@ class Home extends BaseController
         $attributeModel = new AttributeModel();
         $attributeValueModel = new AttributeValueModel();
 
-        $products = $productModel->findAll();
+        $search = trim((string) $this->request->getGet('q'));
+        if ($search !== '') {
+            $products = $productModel
+                ->groupStart()
+                ->like('name', $search)
+                ->orLike('description', $search)
+                ->groupEnd()
+                ->findAll();
+        } else {
+            $products = $productModel->findAll();
+        }
 
         $productVariants = $variantModel
             ->where('is_active', 1)
@@ -80,6 +90,7 @@ class Home extends BaseController
             'attributeValues' => $attributeValues,
             'sizeValues' => $sizeValues,
             'colorValues' => $colorValues,
+            'search' => $search,
         ]);
     }
 
@@ -219,6 +230,45 @@ class Home extends BaseController
     {
         $cartModel = new CartItemModel();
         $cartModel->delete($id);
+        return redirect()->back();
+    }
+
+    public function updateCartItem($id)
+    {
+        $sessionId = session()->get('cart_session_id');
+        if (!$sessionId) {
+            return redirect()->to('/')->with('error', 'No cart yet.');
+        }
+
+        $quantity = max(1, (int) $this->request->getPost('quantity'));
+        $cartModel = new CartItemModel();
+
+        $item = $cartModel
+            ->where('id', $id)
+            ->where('session_id', $sessionId)
+            ->first();
+
+        if (!$item) {
+            return redirect()->back()->with('error', 'Cart item not found.');
+        }
+
+        $cartModel->update($id, [
+            'quantity' => $quantity,
+        ]);
+
+        return redirect()->back();
+    }
+
+    public function clearCart()
+    {
+        $sessionId = session()->get('cart_session_id');
+        if (!$sessionId) {
+            return redirect()->to('/')->with('error', 'No cart yet.');
+        }
+
+        $cartModel = new CartItemModel();
+        $cartModel->where('session_id', $sessionId)->delete();
+
         return redirect()->back();
     }
 }

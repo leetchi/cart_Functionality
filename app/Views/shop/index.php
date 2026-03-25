@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,6 +7,15 @@
 <body>
 <h1>Simple Shop</h1>
 <p><a href="<?= site_url('cart') ?>">View Cart</a></p>
+
+<form method="get" action="<?= site_url('/') ?>">
+    <label>Search products:</label>
+    <input type="text" name="q" value="<?= esc($search ?? '') ?>">
+    <button type="submit">Search</button>
+    <?php if (!empty($search)) : ?>
+        <a href="<?= site_url('/') ?>">Clear</a>
+    <?php endif ?>
+</form>
 
 <h2>Attributes</h2>
 <ul>
